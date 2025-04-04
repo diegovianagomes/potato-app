@@ -1,175 +1,204 @@
 package com.diegoviana.potato.ui.dashboard
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.diegoviana.potato.data.models.SensorData
+import androidx.compose.ui.unit.sp
 import com.diegoviana.potato.data.repository.AlertRepository
 import com.diegoviana.potato.data.repository.SensorRepository
-import com.diegoviana.potato.ui.alerts.AlertsScreen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     sensorRepository: SensorRepository,
     alertRepository: AlertRepository,
+    modifier: Modifier = Modifier
 ) {
-    val sensorDataHistory by sensorRepository.sensorDataHistory.collectAsState() //TODO
-    val alerts by alertRepository.alerts.collectAsState() //TODO
-    val latestData = sensorDataHistory.lastOrNull()
-
-    var isSimulating by remember { mutableStateOf(true) }
+    val sensorDataHistory by sensorRepository.sensorDataHistory.collectAsState()
+    val currentSensorData = sensorDataHistory.lastOrNull()
+    val alerts by alertRepository.alerts.collectAsState()
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Título
         Text(
             text = "Potato Project",
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.padding(bottom = 8.dp)
         )
 
-        // Botão para iniciar/parar simulação
         Button(
-            onClick = {
-                isSimulating = !isSimulating //TODO
-                if (isSimulating) {
-                    sensorRepository.startMonitoring()
-                    alertRepository.startMonitoring()
-                } else {
-                    sensorRepository.stopMonitoring()
-                    alertRepository.stopMonitoring()
-                }
-            },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isSimulating) Color.Red else Color.Green
-            ),
-            modifier = Modifier.fillMaxWidth()
+            onClick = { /* Implementar parar/iniciar simulação */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {
-            Text(if (isSimulating) "Parar Simulação" else "Iniciar Simulação")
+            Text("Parar Simulação")
         }
 
-        // Cartões de dados dos sensores
-        SensorDataCards(latestData)
+        // Grid de sensores - 2x2
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SensorCard(
+                    title = "FC",
+                    subtitle = "Frequência Cardíaca",
+                    value = "${currentSensorData?.heartRate?.toInt() ?: "--"}",
+                    unit = "BPM",
+                    modifier = Modifier.weight(1f)
+                )
 
-        // Tabs para gráficos e alertas
-        var selectedTab by remember { mutableStateOf(0) }
-        TabRow(selectedTabIndex = selectedTab) {
-            Tab(
-                selected = selectedTab == 0,
-                onClick = { selectedTab = 0 },
-                text = { Text("Dados Monitorados") }
-            )
-            Tab(
-                selected = selectedTab == 1,
-                onClick = { selectedTab = 1 },
-                text = {
-                    Row {
-                        Text("Alertas")
-                        if (alerts.isNotEmpty()) {
-                            Badge { Text(alerts.size.toString()) }
+                SensorCard(
+                    title = "VFC",
+                    subtitle = "Variabilidade",
+                    value = "${currentSensorData?.hrv?.toInt() ?: "--"}",
+                    unit = "ms",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SensorCard(
+                    title = "EDA",
+                    subtitle = "Atividade Eletrodérmica",
+                    value = String.format("%.2f", currentSensorData?.eda ?: 0f),
+                    unit = "μS",
+                    modifier = Modifier.weight(1f)
+                )
+
+                SensorCard(
+                    title = "Temp",
+                    subtitle = "Temperatura",
+                    value = String.format("%.1f", currentSensorData?.skinTemp ?: 0f),
+                    unit = "°C",
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            TextButton(onClick = { /* Navegar para tela de dados */ }) {
+                Text("Dados Monitorados")
+            }
+
+            TextButton(onClick = { /* Navegar para tela de alertas */ }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Alertas")
+                    if (alerts.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .size(16.dp)
+                                .background(Color.Red, CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "${alerts.size}",
+                                color = Color.White,
+                                fontSize = 10.sp
+                            )
                         }
                     }
                 }
-            )
+            }
         }
 
-        when (selectedTab) {
-            0 -> SensorDataChart(sensorDataHistory)
-            1 -> AlertsScreen(alerts)
-        }
-    }
-}
+        Spacer(modifier = Modifier.height(8.dp))
 
-@Composable
-fun SensorDataCards(sensorData: SensorData?) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        SensorCard(
-            title = "FC",
-            description = "Frequência Cardíaca",
-            value = sensorData?.heartRate?.toInt()?.toString() ?: "--",
-            unit = "BPM"
-        )
-
-        SensorCard(
-            title = "VFC",
-            description = "Variabilidade FC",
-            value = sensorData?.hrv?.toInt()?.toString() ?: "--",
-            unit = "ms"
-        )
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        SensorCard(
-            title = "EDA",
-            description = "Atividade Eletrodérmica",
-            value = sensorData?.eda?.toString()?.take(4) ?: "--",
-            unit = "μS"
-        )
-        SensorCard(
-            title = "Temp",
-            description = "Temperatura da Pele",
-            value = sensorData?.skinTemp?.toString()?.take(4) ?: "--",
-            unit = "°C"
+        Text(
+            text = "Gráfico será implementado aqui",
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
 
 @Composable
-fun SensorCard(title: String, description: String, value: String, unit: String) {
-    Card(
-        modifier = Modifier
-            .width(80.dp)
-            .height(100.dp)
-            .padding(4.dp)
+fun SensorCard(
+    title: String,
+    subtitle: String,
+    value: String,
+    unit: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant
     ) {
         Column(
-            modifier = Modifier.padding(4.dp),
+            modifier = Modifier.padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = description,
+                text = unit,
                 style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 8.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "$value $unit",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
-}
-
-@Composable
-fun SensorDataChart(sensorDataHistory: List<SensorData>) {
-    // Implementação do gráfico de dados dos sensores
-    // TODO
-    Text("Gráfico será implementado aqui")
 }
