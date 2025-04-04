@@ -1,4 +1,4 @@
-# Arquitetura do Aplicativo Potato para Smartwatch
+# Potato Project
 
 
 ```mermaid
