@@ -3,26 +3,49 @@ package com.diegoviana.potato
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.diegoviana.potato.data.repository.AlertRepository
+import com.diegoviana.potato.data.repository.SensorRepository
+import com.diegoviana.potato.data.sensors.SensorManager
+import com.diegoviana.potato.ui.dashboard.DashboardScreen
 import com.diegoviana.potato.ui.theme.PotatoTheme
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var sensorManager: SensorManager
+    private lateinit var sensorRepository: SensorRepository
+    private lateinit var alertRepository: AlertRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sensorManager = SensorManager(this)
+        sensorRepository = SensorRepository(sensorManager)
+        alertRepository = AlertRepository(sensorRepository)
+
         setContent {
             PotatoTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    Greeting("Android")
-                }
+                DashboardScreen(
+                    sensorRepository = sensorRepository,
+                    alertRepository = alertRepository,
+                )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        sensorRepository.startMonitoring()
+        alertRepository.startMonitoring()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        sensorRepository.stopMonitoring()
+        alertRepository.stopMonitoring()
     }
 }
 
