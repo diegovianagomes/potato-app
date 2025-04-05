@@ -2,10 +2,22 @@ package com.diegoviana.potato.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Cores principais Ghibli
+val GhibliGreen = Color(0xFF8BBD8B)     // Verde suave das paisagens
+val GhibliBlue = Color(0xFF83B2CB)      // Azul céu
+val GhibliMoss = Color(0xFF667B68)      // Verde musgo
+val GhibliTerracotta = Color(0xFFD67F5E) // Terracota
+val GhibliYellow = Color(0xFFF9E6AD)    // Amarelo pálido
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Cores de destaque
+val GhibliRed = Color(0xFFE94B35)       // Vermelho Spirited Away
+val GhibliDeepBlue = Color(0xFF2D5DA1)  // Azul profundo Ponyo
+val GhibliPink = Color(0xFFF6B6C9)      // Rosa Howl's Moving Castle
+
+// Cores neutras
+val GhibliCream = Color(0xFFF8F4E3)     // Bege claro (papel)
+val GhibliBrown = Color(0xFFA39081)     // Marrom acinzentado
+val GhibliShadow = Color(0xFF61747D)    // Cinza azulado
+
+// Background especial (convertido de OKLCH)
+val GhibliBackground = Color(0xFFF5F2E4)

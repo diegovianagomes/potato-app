@@ -73,6 +73,11 @@ dependencies {
 
     // Gráficos
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+    implementation("androidx.navigation:navigation-runtime-ktx:2.8.9")
+    implementation("androidx.navigation:navigation-compose:2.8.9")
+
+    // Fontes
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
 
     // Testes
     testImplementation("junit:junit:4.13.2")
@@ -82,4 +87,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+
 }

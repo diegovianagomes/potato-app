@@ -1,8 +1,10 @@
 package com.diegoviana.potato.ui.alerts
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -14,6 +16,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diegoviana.potato.data.models.Alert
 import com.diegoviana.potato.data.models.Severity
+import com.diegoviana.potato.ui.theme.GhibliGreen
+import com.diegoviana.potato.ui.theme.GhibliRed
+import com.diegoviana.potato.ui.theme.GhibliYellow
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -42,9 +47,15 @@ fun AlertsScreen(alerts: List<Alert>) {
 @Composable
 fun AlertItem(alert: Alert) {
     val backgroundColor = when (alert.severity) {
-        Severity.HIGH -> Color.Red.copy(alpha = 0.2f)
-        Severity.MEDIUM -> Color.Yellow.copy(alpha = 0.2f)
-        Severity.LOW -> Color.Green.copy(alpha = 0.2f)
+        Severity.HIGH -> GhibliRed.copy(alpha = 0.2f)
+        Severity.MEDIUM -> GhibliYellow.copy(alpha = 0.3f)
+        Severity.LOW -> GhibliGreen.copy(alpha = 0.2f)
+    }
+
+    val borderColor = when (alert.severity) {
+        Severity.HIGH -> GhibliRed
+        Severity.MEDIUM -> GhibliYellow
+        Severity.LOW -> GhibliGreen
     }
 
     Card(
@@ -53,7 +64,9 @@ fun AlertItem(alert: Alert) {
             .padding(vertical = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
-        )
+        ),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(2.dp, borderColor.copy(alpha = 1f))
     ) {
         Column(
             modifier = Modifier.padding(8.dp)

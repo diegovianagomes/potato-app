@@ -1,6 +1,8 @@
 package com.diegoviana.potato.ui.dashboard
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,29 +21,39 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.diegoviana.potato.data.repository.AlertRepository
 import com.diegoviana.potato.data.repository.SensorRepository
+import com.diegoviana.potato.ui.theme.*
 
 @Composable
 fun DashboardScreen(
     sensorRepository: SensorRepository,
     alertRepository: AlertRepository,
+    navController: NavController,
     modifier: Modifier = Modifier
 ) {
     val sensorDataHistory by sensorRepository.sensorDataHistory.collectAsState()
     val currentSensorData = sensorDataHistory.lastOrNull()
     val alerts by alertRepository.alerts.collectAsState()
+    var isMonitoringActive by remember { mutableStateOf(true) }
+
+
+    LaunchedEffect(Unit) {
+        if (isMonitoringActive) {
+            sensorRepository.startMonitoring()
+        }
+    }
 
     Column(
         modifier = modifier
@@ -56,18 +68,52 @@ fun DashboardScreen(
         )
 
         Button(
-            onClick = { /* Implementar parar/iniciar simulação */ },
+            onClick = {
+                isMonitoringActive = !isMonitoringActive
+                if (isMonitoringActive) {
+                    sensorRepository.startMonitoring()
+                } else {
+                    sensorRepository.stopMonitoring()
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                .padding(8.dp)
+                .graphicsLayer {
+                    shadowElevation = 16f  // Y position = 2
+                    shape = RoundedCornerShape(12.dp)
+                    clip = true
+                    spotShadowColor = if (isMonitoringActive) Color(0xFFA10000) else Color(0xFF777935)
+                    ambientShadowColor = if (isMonitoringActive) Color(0xFFA10000) else Color(0xFF777935)
+                }
+                .border(
+                    width = 2.dp,
+                    color = if (isMonitoringActive) Color(0xFFA10000) else Color(0xFF777935),
+                    shape = RoundedCornerShape(12.dp)
+                ),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isMonitoringActive) Color(0xFFE7251A) else Color(0xFF989B55),
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(12.dp),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp
+            )
         ) {
-            Text("Parar Simulação")
+            Text(
+                text = if (isMonitoringActive) "parar" else "iniciar",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
         }
 
         // Grid de sensores - 2x2
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -75,7 +121,7 @@ fun DashboardScreen(
             ) {
                 SensorCard(
                     title = "FC",
-                    subtitle = "Frequência Cardíaca",
+                    subtitle = "",
                     value = "${currentSensorData?.heartRate?.toInt() ?: "--"}",
                     unit = "BPM",
                     modifier = Modifier.weight(1f)
@@ -83,7 +129,7 @@ fun DashboardScreen(
 
                 SensorCard(
                     title = "VFC",
-                    subtitle = "Variabilidade",
+                    subtitle = "",
                     value = "${currentSensorData?.hrv?.toInt() ?: "--"}",
                     unit = "ms",
                     modifier = Modifier.weight(1f)
@@ -98,7 +144,7 @@ fun DashboardScreen(
             ) {
                 SensorCard(
                     title = "EDA",
-                    subtitle = "Atividade Eletrodérmica",
+                    subtitle = "",
                     value = String.format("%.2f", currentSensorData?.eda ?: 0f),
                     unit = "μS",
                     modifier = Modifier.weight(1f)
@@ -106,7 +152,7 @@ fun DashboardScreen(
 
                 SensorCard(
                     title = "Temp",
-                    subtitle = "Temperatura",
+                    subtitle = "",
                     value = String.format("%.1f", currentSensorData?.skinTemp ?: 0f),
                     unit = "°C",
                     modifier = Modifier.weight(1f)
@@ -124,7 +170,11 @@ fun DashboardScreen(
                 Text("Dados Monitorados")
             }
 
-            TextButton(onClick = { /* Navegar para tela de alertas */ }) {
+            TextButton(onClick = { navController.navigate("alerts") },
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = GhibliDeepBlue
+                )
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Alertas")
                     if (alerts.isNotEmpty()) {
@@ -132,12 +182,12 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .padding(start = 4.dp)
                                 .size(16.dp)
-                                .background(Color.Red, CircleShape),
+                                .background(GhibliRed, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "${alerts.size}",
-                                color = Color.White,
+                                color = GhibliCream,
                                 fontSize = 10.sp
                             )
                         }
@@ -168,36 +218,48 @@ fun SensorCard(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant
+        modifier = modifier.padding(4.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)),
+        shadowElevation = 4.dp
     ) {
         Column(
-            modifier = Modifier.padding(8.dp),
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.primary
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+
             Text(
                 text = unit,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
             Text(
                 text = subtitle,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 8.sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
             )
         }
     }
