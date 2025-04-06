@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -118,7 +117,7 @@ fun DashboardScreen(
             ) {
                 SensorCard(
                     title = "FC",
-                    subtitle = "",
+                    //subtitle = "",
                     value = "${currentSensorData?.heartRate?.toInt() ?: "--"}",
                     unit = "BPM",
                     modifier = Modifier.weight(1f)
@@ -126,7 +125,7 @@ fun DashboardScreen(
 
                 SensorCard(
                     title = "VFC",
-                    subtitle = "",
+                    //subtitle = "",
                     value = "${currentSensorData?.hrv?.toInt() ?: "--"}",
                     unit = "ms",
                     modifier = Modifier.weight(1f)
@@ -141,7 +140,7 @@ fun DashboardScreen(
             ) {
                 SensorCard(
                     title = "EDA",
-                    subtitle = "",
+                    //subtitle = "",
                     value = String.format("%.2f", currentSensorData?.eda ?: 0f),
                     unit = "μS",
                     modifier = Modifier.weight(1f)
@@ -149,7 +148,7 @@ fun DashboardScreen(
 
                 SensorCard(
                     title = "Temp",
-                    subtitle = "",
+                    //subtitle = "",
                     value = String.format("%.1f", currentSensorData?.skinTemp ?: 0f),
                     unit = "°C",
                     modifier = Modifier.weight(1f)
@@ -209,7 +208,7 @@ fun DashboardScreen(
 @Composable
 fun SensorCard(
     title: String,
-    subtitle: String,
+    //subtitle: String,
     value: String,
     unit: String,
     modifier: Modifier = Modifier
