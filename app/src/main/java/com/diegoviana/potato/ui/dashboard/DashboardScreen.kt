@@ -15,23 +15,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.diegoviana.potato.R
 import com.diegoviana.potato.data.repository.AlertRepository
 import com.diegoviana.potato.data.repository.SensorRepository
 import com.diegoviana.potato.ui.theme.*
@@ -217,12 +214,43 @@ fun SensorCard(
     unit: String,
     modifier: Modifier = Modifier
 ) {
+
+    val cardBackground = Color(0xFFF0E9D2)
+    val borderColor = Color(0xFFC8B88A)
+
+
+    val icon: @Composable () -> Unit = {
+        when (title) {
+            "FC" -> Icon(
+                painter = painterResource(id = R.drawable.ic_heart),
+                contentDescription = "Frequência Cardíaca",
+                tint = Color(0xFF789F5A)
+            )
+            "VFC" -> Icon(
+                painter = painterResource(id = R.drawable.ic_heart_rate),
+                contentDescription = "Variabilidade da Frequência Cardíaca",
+                tint = Color(0xFF789F5A)
+            )
+            "EDA" -> Icon(
+                painter = painterResource(id = R.drawable.ic_eda),
+                contentDescription = "Atividade Eletrodérmica",
+                tint = Color(0xFF789F5A)
+            )
+            "Temp" -> Icon(
+                painter = painterResource(id = R.drawable.ic_temperature),
+                contentDescription = "Temperatura",
+                tint = Color(0xFF789F5A)
+            )
+            else -> {}
+        }
+    }
+
     Surface(
         modifier = modifier.padding(4.dp),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)),
-        shadowElevation = 4.dp
+        color = cardBackground,
+        border = BorderStroke(1.dp, borderColor),
+        shadowElevation = 2.dp
     ) {
         Column(
             modifier = Modifier
@@ -230,36 +258,52 @@ fun SensorCard(
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Título no topo
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = Color(0xFF789F5A), // Verde Ghibli para títulos
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Ícone e valor no centro
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    // Ícone à esquerda
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .padding(end = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        icon()
+                    }
 
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                    // Valor grande no centro
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF789F5A), // Verde Ghibli para valores
+                        fontSize = 24.sp
+                    )
+                }
+            }
 
+            // Unidade na parte inferior
             Text(
                 text = unit,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center
+                color = Color(0xFF789F5A), // Verde Ghibli para unidades
+                fontWeight = FontWeight.Medium
             )
         }
     }
