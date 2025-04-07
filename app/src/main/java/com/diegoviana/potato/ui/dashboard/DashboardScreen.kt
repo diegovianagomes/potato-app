@@ -30,6 +30,8 @@ import androidx.navigation.NavController
 import com.diegoviana.potato.R
 import com.diegoviana.potato.data.repository.AlertRepository
 import com.diegoviana.potato.data.repository.SensorRepository
+import com.diegoviana.potato.ui.alerts.AlertsScreen
+import com.diegoviana.potato.ui.charts.SensorDataChart
 import com.diegoviana.potato.ui.theme.*
 
 @Composable
@@ -194,14 +196,8 @@ fun DashboardScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "Gráfico será implementado aqui",
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        SensorDataChart(sensorDataHistory = sensorDataHistory)
+
     }
 }
 

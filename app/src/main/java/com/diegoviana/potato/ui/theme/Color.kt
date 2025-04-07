@@ -20,4 +20,4 @@ val GhibliBrown = Color(0xFFA39081)     // Marrom acinzentado
 val GhibliShadow = Color(0xFF61747D)    // Cinza azulado
 
 // Background especial (convertido de OKLCH)
-val GhibliBackground = Color(0xFFF5F2E4)
+val GhibliBackground = Color(0xE0CDAB)

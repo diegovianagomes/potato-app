@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.diegoviana.potato.data.models.Alert
 import com.diegoviana.potato.data.models.Severity
+import com.diegoviana.potato.ui.theme.GhibliBackground
 import com.diegoviana.potato.ui.theme.GhibliGreen
 import com.diegoviana.potato.ui.theme.GhibliRed
 import com.diegoviana.potato.ui.theme.GhibliYellow
@@ -61,9 +62,16 @@ fun AlertItem(alert: Alert) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(
+                PaddingValues(
+                    start = 16.dp,
+                    top = 8.dp,
+                    end = 16.dp,
+                    bottom = 8.dp
+                )
+            ),
         colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
+            containerColor = GhibliBackground
         ),
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(2.dp, borderColor.copy(alpha = 1f))

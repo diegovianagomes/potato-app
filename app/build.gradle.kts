@@ -58,6 +58,8 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.7.0")
+    implementation("com.patrykandpatrick.vico:compose:1.12.0")
+    implementation("com.patrykandpatrick.vico:compose-m3:1.12.0")
 
     // Wear OS
     implementation("androidx.wear:wear:1.2.0")
