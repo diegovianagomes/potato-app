@@ -13,42 +13,43 @@ graph TD
     subgraph UI["UI Layer (Jetpack Compose)"]
         DS[DashboardScreen]
         AS[AlertsScreen]
-        SDC[SensorDataChart (MPAndroidChart)]
+        SDC["SensorDataChart (MPAndroidChart)"] %% <-- Aspas adicionadas
     end
 
     subgraph Data["Data Layer"]
         SR[SensorRepository]
         AR[AlertRepository]
-        SM[SensorManager (Simulação)]
+        SM["SensorManager (Simulação)"] %% <-- Aspas adicionadas
     end
 
     subgraph Model["Model Layer"]
-        SD[SensorData (HR, SDNN, EDA, Temp, Mov)]
-        A[Alert (ID, Timestamp, Título, Desc, Severidade)]
-        SS[SimulationState (Enum: CALM, MILD_STRESS, HIGH_STRESS)]
+        SD["SensorData (HR, SDNN, EDA, Temp, Mov)"] %% <-- Aspas adicionadas
+        A["Alert (ID, Timestamp, Título, Desc, Severidade)"] %% <-- Aspas adicionadas
+        SS["SimulationState (Enum: CALM, MILD_STRESS, HIGH_STRESS)"] %% <-- Aspas adicionadas
     end
 
     subgraph Utils["Utilities"]
-        ME[MathExtensions <br/> standardDeviation()]
+        %% Usando <br> para quebra de linha dentro das aspas
+        ME["MathExtensions <br/> standardDeviation()"] %% <-- Aspas adicionadas
     end
 
-    %% Conexões
-    SM -- Simula Estado --> SS
-    SM -- Simula IBI baseado em Estado --> SM
-    SM -- Calcula HR, SDNN de IBIs --> SD
-    SM -- Simula EDA baseado em Estado --> SD
-    SM -- Usa Cálculo --> ME
+    %% Conexões (usando aspas nos rótulos para clareza)
+    SM -- "Simula Estado" --> SS
+    SM -- "Simula IBI baseado em Estado" --> SM %% <-- Rótulo entre aspas
+    SM -- "Calcula HR, SDNN de IBIs" --> SD %% <-- Rótulo entre aspas
+    SM -- "Simula EDA baseado em Estado" --> SD %% <-- Rótulo entre aspas
+    SM -- "Usa Cálculo" --> ME %% <-- Rótulo entre aspas
     SM -- Gera --> SD
-    SM -- Fornece Dados --> SR
+    SM -- "Fornece Dados" --> SR %% <-- Rótulo entre aspas
 
-    SR -- Coleta/Armazena Histórico --> SD
-    AR -- Coleta Dados --> SR
-    AR -- Analisa Padrões --> SD
-    AR -- Usa Modelo --> A
+    SR -- "Coleta/Armazena Histórico" --> SD %% <-- Rótulo entre aspas
+    AR -- "Coleta Dados" --> SR %% <-- Rótulo entre aspas
+    AR -- "Analisa Padrões" --> SD %% <-- Rótulo entre aspas
+    AR -- "Usa Modelo" --> A %% <-- Rótulo entre aspas
     AR -- Gera --> A
 
     DS -- Consome --> SR
-    DS -- Navega para --> AS
+    DS -- "Navega para" --> AS %% <-- Rótulo entre aspas
     AS -- Consome --> AR
     SDC -- Visualiza --> SR
 
