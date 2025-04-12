@@ -2,7 +2,7 @@
 package com.diegoviana.potato.data.sensors
 
 import android.content.Context
-import android.hardware.Sensor
+
 import android.util.Log
 import com.diegoviana.potato.data.models.SensorData
 import kotlinx.coroutines.*
@@ -10,12 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import com.diegoviana.potato.utils.standardDeviation
 
 class SensorManager(private val context: Context) {
-
-    private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as android.hardware.SensorManager
-    private val heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-    private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
     private val _sensorData = MutableStateFlow<SensorData?>(null)
     val sensorData: StateFlow<SensorData?> = _sensorData
@@ -27,36 +24,14 @@ class SensorManager(private val context: Context) {
     private val recentIBIs = mutableListOf<Float>()
     private val ibiWindowMillis = 30000L // Window with 30 sec. to calculate the average IBI
 
-    private var lastHeartRate = 75f
-    private var lastHrv = 50f
+    //private var lastHrv = 50f
+    private var calculatedSdnn = 0f
     private var lastEda = 2.5f
     private var lastSkinTemp = 36.5f
     private var lastMovementX = 0f
     private var lastMovementY = 0f
     private var lastMovementZ = 0f
 
-    /*
-    private val sensorListener = object : SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent) {
-            when (event.sensor.type) {
-                Sensor.TYPE_HEART_RATE -> {
-                    lastHeartRate = event.values[0]
-                    simulateHrvCalculation()
-                }
-                Sensor.TYPE_ACCELEROMETER -> {
-                    lastMovementX = event.values[0]
-                    lastMovementY = event.values[1]
-                    lastMovementZ = event.values[2]
-                }
-            }
-            simulateEdaAndTemp()
-            updateSensorData()
-        }
-        override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-            // Not used
-        }
-    }
-    */
     fun startMonitoring() {
         Log.d("SensorManager", "Start Monitoring")
         startSimulating()
@@ -67,9 +42,8 @@ class SensorManager(private val context: Context) {
         stopSimulation()
     }
 
-
     private fun startSimulating() {
-        if (simulationJob != null) {
+        if (simulationJob?.isActive == true) {
             Log.d("SensorManager", "Simulation already running")
             return
         }
@@ -78,7 +52,7 @@ class SensorManager(private val context: Context) {
             // reset initial state
             currentIBI = 800f
             recentIBIs.clear()
-            lastHrv = 50f
+            calculatedSdnn = 0f
             lastEda = 2.5f
             lastSkinTemp = 36.5f
             lastMovementX = 0f
@@ -105,7 +79,7 @@ class SensorManager(private val context: Context) {
     }
 
     private fun stopSimulation() {
-        if (simulationJob?.isActive == null) {
+        if (simulationJob?.isActive == true) {
             Log.d("SensorManager", "Stopping simulation")
             simulationJob?.cancel()
         } else {
@@ -122,6 +96,7 @@ class SensorManager(private val context: Context) {
 
         // Add IBI to the recent list and keep the window
         recentIBIs.add(currentIBI)
+        val safeCurrentIBI = currentIBI.coerceAtLeast(100f)
         val estimatedSamplesInWindow = (ibiWindowMillis / currentIBI).coerceAtLeast(400f).roundToInt() + 5
         while (recentIBIs.size > estimatedSamplesInWindow && recentIBIs.size > 10) {
             recentIBIs.removeAt(0)
@@ -131,11 +106,15 @@ class SensorManager(private val context: Context) {
         val averageIBI = if (recentIBIs.isNotEmpty()) recentIBIs.average().toFloat() else currentIBI
         val calculatedHR = if (averageIBI > 0) 60000f / averageIBI else 0f
 
-        simulateHrvPlaceholder(averageIBI)
+        //simulateHrvPlaceholder(averageIBI)
+        //  Calculate SDNN (Standard Deviation of Recent IBIs)
+        calculateAndSetSdnn()
+        simulateEdaAndTemp()
+        simulateMovement()
 
         val newData = SensorData(
             heartRate = calculatedHR,
-            hrv = lastHrv,
+            hrv = calculatedSdnn,
             eda = lastEda,
             skinTemp = lastSkinTemp,
             movementX = lastMovementX,
@@ -144,13 +123,15 @@ class SensorManager(private val context: Context) {
             timestamp = System.currentTimeMillis()
         )
         _sensorData.value = newData
+        Log.v("SensorManager",
+            "New data:  " +
+                    "HR=${newData.heartRate.roundToInt()}, " +
+                    "SDNN=${String.format("%.1f", newData.hrv)}, " +
+                    "EDA=${String.format("%.1f", newData.eda)}")
     }
-    private fun simulateHrvPlaceholder(avgIBI: Float) {
-        val variationFactor = (avgIBI / 800f).coerceIn(0.5f, 1.5f) // Factor based on average IBI, with limits
-        lastHrv += Random.nextDouble(-2.0, 2.0).toFloat() * variationFactor
-        lastHrv = lastHrv.coerceIn(10f, 120f) // Limits HRV
+    private fun calculateAndSetSdnn() {
+        calculatedSdnn = recentIBIs.standardDeviation()
     }
-
 
     private fun simulateEdaAndTemp() {
         lastEda += Random.nextDouble(-0.1, 0.1).toFloat()
