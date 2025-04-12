@@ -1,5 +1,6 @@
 package com.diegoviana.potato.data.repository
 
+import android.util.Log
 import com.diegoviana.potato.data.models.Alert
 import com.diegoviana.potato.data.models.SensorData
 import com.diegoviana.potato.data.models.Severity
@@ -7,87 +8,121 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 class AlertRepository(private val sensorRepository: SensorRepository) {
     private val _alerts = MutableStateFlow<List<Alert>>(emptyList())
     val alerts: StateFlow<List<Alert>> = _alerts
 
-    private var stressLevel = 0f
-    private var stressIncreasing = false
-    private var alertJob: Job? = null
+    private var analysisJob: Job? = null
+    private val analysisScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    private val HIGH_HR_THRESHOLD = 95f
+    private val LOW_SDNN_THRESHOLD = 30f
+    private val HIGH_EDA_THRESHOLD = 7.0f
+    private val CONDITION_DURATION_POINTS = 8
+    private val ALERT_COOLDOWN_MS = 120 * 1000L
+
+
+    private var highStressConditionMet = false
+    private var lastHighStressAlertTime = 0L
+
+    private enum class AlertType {
+        HIGH_STRESS,
+        MEDIUM,
+        CALM_RECOVERY
+    }
 
     fun startMonitoring() {
-        alertJob = CoroutineScope(Dispatchers.Default).launch {
+        analysisJob?.cancel()
+        analysisJob = analysisScope.launch {
+            Log.d("AlertRepository", "Starting data analysis for alerts.")
             sensorRepository.sensorDataHistory.collect { sensorDataList ->
-                if (sensorDataList.isNotEmpty()) {
-                    analyzeDataForAlerts(sensorDataList.last())
+                if (sensorDataList.size >= CONDITION_DURATION_POINTS) {
+                    analyzeDataForAlerts(sensorDataList)
                 }
             }
         }
-        scheduleStressEvent()
+        Log.d("AlertRepository", "Alert analysis job launched.")
     }
 
     fun stopMonitoring() {
-        alertJob?.cancel()
-        alertJob = null
+        if (analysisJob?.isActive == true) {
+            Log.d("AlertRepository", "Stopping data analysis for alerts.")
+            analysisJob?.cancel()
+        }
+        analysisJob = null
     }
 
-    private fun analyzeDataForAlerts(sensorData: SensorData) {
-        // Lógica simplificada para detectar padrões que podem gerar alertas
-        if (stressIncreasing) {
-            stressLevel += 0.1f
-        } else {
-            stressLevel = (stressLevel - 0.05f).coerceAtLeast(0f)
+    private fun analyzeDataForAlerts(sensorDataList: List<SensorData>) {
+        val recentData = sensorDataList.takeLast(CONDITION_DURATION_POINTS)
+
+        val isHighStressPattern = recentData.all { data ->
+            data.heartRate > HIGH_HR_THRESHOLD &&
+                    data.hrv < LOW_SDNN_THRESHOLD &&
+                    data.eda > HIGH_EDA_THRESHOLD
         }
 
-        // Gerar alerta quando o nível de estresse ultrapassa um limiar
-        if (stressLevel > 0.8f) {
-            generateAlert(sensorData)
-            stressLevel = 0f
+        val now = System.currentTimeMillis()
+
+        if (isHighStressPattern && !highStressConditionMet) {
+            Log.i("AlertRepository", "High Stress Pattern detected consistently for $CONDITION_DURATION_POINTS points.")
+            highStressConditionMet = true
+
+            if (now - lastHighStressAlertTime > ALERT_COOLDOWN_MS) {
+                Log.w("AlertRepository", "Generating High Stress Alert!")
+                generateAlert(recentData.last(), AlertType.HIGH_STRESS)
+                lastHighStressAlertTime = now
+            } else {
+                Log.d("AlertRepository", "High Stress Pattern detected, but alert is on cooldown.")
+            }
+        } else if (!isHighStressPattern && highStressConditionMet) {
+            Log.d("AlertRepository", "High Stress Pattern no longer detected.")
+            highStressConditionMet = false
         }
     }
 
-    private fun generateAlert(sensorData: SensorData) {
-        val alertTypes = listOf(
-            Triple("Possível Ansiedade Detectada",
-                "Detectamos uma frequência cardíaca elevada e mudanças na condutância da pele, o que pode ser um sinal de ansiedade. Fique tranquilo, estamos aqui para ajudar!",
-                Severity.MEDIUM),
-            Triple("Padrão de Estresse Elevado",
-                "Seus indicadores apontam para uma resposta intensa ao estresse. Estamos aqui para ajudar você a entender melhor o que pode estar acontecendo.",
-                Severity.HIGH),
-            Triple("Padrão de Movimento Repetitivo",
-                "Detectamos movimentos repetitivos. Isso pode ser uma forma natural de autorregulação e conforto. Tudo bem se você precisar desse momento!",
-                Severity.LOW)
-        )
+    private fun generateAlert(sensorData: SensorData, type: AlertType) {
+        val title: String
+        val description: String
+        val severity: Severity
 
-        val selectedAlert = alertTypes.random()
+        when (type) {
+            AlertType.HIGH_STRESS -> {
+                title = "Padrão de Estresse Elevado"
+                description = "Detectamos uma combinação de frequência cardíaca alta (${sensorData.heartRate.toInt()} bpm), baixa variabilidade (SDNN ${String.format("%.1f", sensorData.hrv)} ms) e alta atividade eletrodérmica (EDA ${String.format("%.1f", sensorData.eda)} µS) recentemente. Respire fundo, estamos aqui para ajudar."
+                severity = Severity.HIGH
+            }
+
+            AlertType.MEDIUM -> {
+                title = "Frequência Cardíaca Baixa"
+                description = "Sua frequência cardíaca esteve consistentemente abaixo do normal (${sensorData.heartRate.toInt()} bpm). Verifique como você está se sentindo."
+                severity = Severity.MEDIUM
+
+                Log.w("AlertRepository", "LOW_HR alert generation triggered but not fully implemented.")
+                return
+            }
+            AlertType.CALM_RECOVERY -> {
+                title = "Período de Calma Detectado"
+                description = "Seus indicadores (FC: ${sensorData.heartRate.toInt()} bpm, SDNN: ${String.format("%.1f", sensorData.hrv)} ms) sugerem um período de relaxamento ou recuperação. Ótimo!"
+                severity = Severity.LOW
+                Log.w("AlertRepository", "CALM_RECOVERY alert generation triggered but not fully implemented.")
+                return
+            }
+        }
 
         val alert = Alert(
-            id = "alert-${System.currentTimeMillis()}",
+            id = UUID.randomUUID().toString(),
             timestamp = System.currentTimeMillis(),
-            title = selectedAlert.first,
-            description = selectedAlert.second,
-            severity = selectedAlert.third,
+            title = title,
+            description = description,
+            severity = severity,
             sensorData = sensorData
         )
 
-        _alerts.update { it + alert }
-    }
-
-    private fun scheduleStressEvent() {
-        CoroutineScope(Dispatchers.Default).launch {
-            while (isActive) {
-                // Programar um evento de estresse após um intervalo aleatório
-                val randomTime = (30000 + Math.random() * 60000).toLong() // Entre 30s e 90s
-                delay(randomTime)
-
-                stressIncreasing = true
-
-                // O evento de estresse dura de 15 a 30 segundos
-                val stressDuration = (15000 + Math.random() * 15000).toLong()
-                delay(stressDuration)
-
-                stressIncreasing = false
+        if (_alerts.value.find { it.title == alert.title && (System.currentTimeMillis() - it.timestamp < 10000) } == null) {
+            _alerts.update { currentAlerts ->
+                (currentAlerts + alert).takeLast(50)
             }
         }
     }
