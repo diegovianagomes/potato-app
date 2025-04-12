@@ -8,31 +8,29 @@ Este projeto é uma Prova de Conceito (POC) de um aplicativo Android para monito
 
 O aplicativo segue uma arquitetura em camadas para separação de responsabilidades.
 
-```mermaid
-graph TD
+```graph TD
     subgraph UI["UI Layer (Jetpack Compose)"]
-        DS[DashboardScreen]
-        AS[AlertsScreen]
-        SDC["SensorDataChart (MPAndroidChart)"] %% <-- Aspas adicionadas
+    DS[DashboardScreen]
+    AS[AlertsScreen]
+    SDC["SensorDataChart (MPAndroidChart)"] %% <-- Aspas adicionadas
     end
-
     subgraph Data["Data Layer"]
         SR[SensorRepository]
         AR[AlertRepository]
         SM["SensorManager (Simulação)"] %% <-- Aspas adicionadas
     end
-
+    
     subgraph Model["Model Layer"]
         SD["SensorData (HR, SDNN, EDA, Temp, Mov)"] %% <-- Aspas adicionadas
         A["Alert (ID, Timestamp, Título, Desc, Severidade)"] %% <-- Aspas adicionadas
         SS["SimulationState (Enum: CALM, MILD_STRESS, HIGH_STRESS)"] %% <-- Aspas adicionadas
     end
-
+    
     subgraph Utils["Utilities"]
         %% Usando <br> para quebra de linha dentro das aspas
         ME["MathExtensions <br/> standardDeviation()"] %% <-- Aspas adicionadas
     end
-
+    
     %% Conexões (usando aspas nos rótulos para clareza)
     SM -- "Simula Estado" --> SS
     SM -- "Simula IBI baseado em Estado" --> SM %% <-- Rótulo entre aspas
@@ -41,24 +39,24 @@ graph TD
     SM -- "Usa Cálculo" --> ME %% <-- Rótulo entre aspas
     SM -- Gera --> SD
     SM -- "Fornece Dados" --> SR %% <-- Rótulo entre aspas
-
+    
     SR -- "Coleta/Armazena Histórico" --> SD %% <-- Rótulo entre aspas
     AR -- "Coleta Dados" --> SR %% <-- Rótulo entre aspas
     AR -- "Analisa Padrões" --> SD %% <-- Rótulo entre aspas
     AR -- "Usa Modelo" --> A %% <-- Rótulo entre aspas
     AR -- Gera --> A
-
+    
     DS -- Consome --> SR
     DS -- "Navega para" --> AS %% <-- Rótulo entre aspas
     AS -- Consome --> AR
     SDC -- Visualiza --> SR
-
+  
     %% Estilo
     classDef uiLayer fill:#4285F4,stroke:#333,stroke-width:1px;
     classDef dataLayer fill:#34A853,stroke:#333,stroke-width:1px;
     classDef model fill:#FBBC05,stroke:#333,stroke-width:1px;
     classDef utils fill:#EA4335,stroke:#333,stroke-width:1px;
-
+    
     class DS,AS,SDC uiLayer;
     class SR,AR,SM dataLayer;
     class SD,A,SS model;
